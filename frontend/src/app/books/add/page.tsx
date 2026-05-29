@@ -14,16 +14,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-/* ------------------ Schema ------------------ */
+/* ✅ FIXED SCHEMA (NO coerce) */
 const bookSchema = z.object({
   title: z.string().min(1, "Title is required"),
   author: z.string().min(1, "Author is required"),
-  isbn: z.string().min(10, "ISBN must be at least 10 characters").max(13),
-  category: z.string().min(1, "Category is required"),
-  price: z.coerce.number().min(0, "Price cannot be negative"),
-  stock: z.coerce.number().min(0, "Stock cannot be negative"),
-  published_date: z.string().min(1, "Published date is required"),
-  description: z.string().min(1, "Description is required"),
+  isbn: z.string().min(10).max(13),
+  category: z.string().min(1),
+  price: z.number().min(0),
+  stock: z.number().min(0),
+  published_date: z.string(),
+  description: z.string(),
   cover_image: z.string().optional(),
 });
 
@@ -31,7 +31,7 @@ type BookForm = z.infer<typeof bookSchema>;
 
 export default function AddBookPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
@@ -48,7 +48,7 @@ export default function AddBookPage() {
   });
 
   const onSubmit = async (values: BookForm) => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       await booksApi.create({
         ...values,
@@ -60,7 +60,7 @@ export default function AddBookPage() {
     } catch (error) {
       toastError(error, "Failed to add book");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -81,102 +81,66 @@ export default function AddBookPage() {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Title */}
-              <div>
-                <label className="text-sm font-medium">Title</label>
-                <Input {...register("title")} />
-                {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
-              </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <Input {...register("title")} placeholder="Title" />
+            <Input {...register("author")} placeholder="Author" />
+            <Input {...register("isbn")} placeholder="ISBN" />
 
-              {/* Author */}
-              <div>
-                <label className="text-sm font-medium">Author</label>
-                <Input {...register("author")} />
-                {errors.author && <p className="text-sm text-destructive">{errors.author.message}</p>}
-              </div>
+            <select {...register("category")} className="w-full border p-2 rounded">
+              <option value="">Select category</option>
+              <option value="Fiction">Fiction</option>
+              <option value="Non-Fiction">Non-Fiction</option>
+              <option value="Science">Science</option>
+              <option value="Technology">Technology</option>
+              <option value="History">History</option>
+            </select>
 
-              {/* ISBN */}
-              <div>
-                <label className="text-sm font-medium">ISBN</label>
-                <Input {...register("isbn")} />
-                {errors.isbn && <p className="text-sm text-destructive">{errors.isbn.message}</p>}
-              </div>
+            {/* ✅ valueAsNumber FIX */}
+            <Input
+              type="number"
+              {...register("price", { valueAsNumber: true })}
+              placeholder="Price"
+            />
 
-              {/* Category */}
-              <div>
-                <label className="text-sm font-medium">Category</label>
-                <select
-                  {...register("category")}
-                  className="flex h-10 w-full rounded-md border border-input px-3 text-sm"
-                >
-                  <option value="">Select category</option>
-                  <option value="Fiction">Fiction</option>
-                  <option value="Non-Fiction">Non-Fiction</option>
-                  <option value="Science">Science</option>
-                  <option value="Technology">Technology</option>
-                  <option value="History">History</option>
-                </select>
-                {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
-              </div>
+            <Input
+              type="number"
+              {...register("stock", { valueAsNumber: true })}
+              placeholder="Stock"
+            />
 
-              {/* Price */}
-              <div>
-                <label className="text-sm font-medium">Price</label>
-                <Input type="number" step="0.01" {...register("price")} />
-              </div>
+            <Input type="date" {...register("published_date")} />
 
-              {/* Stock */}
-              <div>
-                <label className="text-sm font-medium">Stock</label>
-                <Input type="number" {...register("stock")} />
-              </div>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
 
-              {/* Published Date */}
-              <div>
-                <label className="text-sm font-medium">Published Date</label>
-                <Input type="date" {...register("published_date")} />
-              </div>
+                try {
+                  const { data } = await uploadApi.uploadImage(file);
+                  setValue("cover_image", data.url);
+                  toastSuccess("Image uploaded");
+                } catch {
+                  toastError("Image upload failed");
+                }
+              }}
+            />
 
-              {/* Cover Image */}
-              <div>
-                <label className="text-sm font-medium">Cover Image</label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-
-                    try {
-                      const { data } = await uploadApi.uploadImage(file);
-                      setValue("cover_image", data.url);
-                      toastSuccess("Image uploaded");
-                    } catch {
-                      toastError("Image upload failed");
-                    }
-                  }}
-                />
-                <Input {...register("cover_image")} placeholder="Or paste image URL" />
-              </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="text-sm font-medium">Description</label>
-              <textarea
-                {...register("description")}
-                rows={4}
-                className="w-full rounded-md border border-input p-2 text-sm"
-              />
-            </div>
+            <textarea
+              {...register("description")}
+              rows={4}
+              className="w-full border rounded p-2"
+              placeholder="Description"
+            />
 
             <div className="flex justify-end gap-3">
               <Link href="/books">
                 <Button variant="outline" type="button">Cancel</Button>
               </Link>
-              <Button type="submit" isLoading={isLoading}>Save Book</Button>
+              <Button type="submit" isLoading={loading}>
+                Save Book
+              </Button>
             </div>
           </form>
         </CardContent>
