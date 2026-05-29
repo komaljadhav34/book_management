@@ -15,18 +15,19 @@ app = FastAPI(
 )
 
 # CORS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://book-management-iuyq.vercel.app",  # ✅ Vercel frontend
+        "https://book-management-five-bice.vercel.app",
+        "https://book-management-c87sjij2t-komaljadhav34s-projects.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Static files for image uploads
 os.makedirs("static/uploads", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
