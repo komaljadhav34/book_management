@@ -6,6 +6,7 @@ from app.routes import auth_routes, book_routes, stats_routes, activity_routes, 
 from fastapi.staticfiles import StaticFiles
 import os
 
+# ✅ CREATE APP FIRST
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Full Stack Intern Hiring Task – Book Management System API",
@@ -14,21 +15,21 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS
-
+# ✅ SINGLE, CORRECT CORS CONFIG
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://book-management-five-bice.vercel.app",
-        "https://book-management-c87sjij2t-komaljadhav34s-projects.vercel.app"
+        "https://book-management-c87sjij2t-komaljadhav34s-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# Static files for image uploads
+
+# Static files
 os.makedirs("static/uploads", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
