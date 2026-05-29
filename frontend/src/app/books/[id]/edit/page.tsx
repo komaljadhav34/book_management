@@ -15,14 +15,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-/* ------------------ Schema ------------------ */
+/* ✅ FIXED SCHEMA (NO coerce) */
 const bookSchema = z.object({
   title: z.string().min(1),
   author: z.string().min(1),
   isbn: z.string().min(10).max(13),
   category: z.string().min(1),
-  price: z.coerce.number().min(0),
-  stock: z.coerce.number().min(0),
+  price: z.number().min(0),
+  stock: z.number().min(0),
   published_date: z.string(),
   description: z.string(),
   cover_image: z.string().optional(),
@@ -35,7 +35,12 @@ export default function EditBookPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const { register, handleSubmit, reset, setValue } = useForm<BookForm>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+  } = useForm<BookForm>({
     resolver: zodResolver(bookSchema),
   });
 
@@ -43,9 +48,14 @@ export default function EditBookPage({ params }: { params: { id: string } }) {
     const loadBook = async () => {
       try {
         const { data } = await booksApi.getById(params.id);
+
         reset({
           ...data,
-          published_date: new Date(data.published_date).toISOString().split("T")[0],
+          price: Number(data.price),
+          stock: Number(data.stock),
+          published_date: new Date(data.published_date)
+            .toISOString()
+            .split("T")[0],
         });
       } catch {
         toastError("Failed to load book");
@@ -66,10 +76,10 @@ export default function EditBookPage({ params }: { params: { id: string } }) {
         published_date: new Date(values.published_date).toISOString(),
       });
 
-      toastSuccess("Book updated");
+      toastSuccess("Book updated successfully");
       router.push(`/books/${params.id}`);
     } catch {
-      toastError("Update failed");
+      toastError("Failed to update book");
     } finally {
       setSaving(false);
     }
@@ -96,11 +106,11 @@ export default function EditBookPage({ params }: { params: { id: string } }) {
 
       <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle>Update Book</CardTitle>
+          <CardTitle>Edit Book</CardTitle>
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input {...register("title")} placeholder="Title" />
             <Input {...register("author")} placeholder="Author" />
             <Input {...register("isbn")} placeholder="ISBN" />
@@ -114,8 +124,19 @@ export default function EditBookPage({ params }: { params: { id: string } }) {
               <option value="History">History</option>
             </select>
 
-            <Input type="number" {...register("price")} placeholder="Price" />
-            <Input type="number" {...register("stock")} placeholder="Stock" />
+            {/* ✅ valueAsNumber FIX */}
+            <Input
+              type="number"
+              {...register("price", { valueAsNumber: true })}
+              placeholder="Price"
+            />
+
+            <Input
+              type="number"
+              {...register("stock", { valueAsNumber: true })}
+              placeholder="Stock"
+            />
+
             <Input type="date" {...register("published_date")} />
 
             <Input
@@ -125,9 +146,13 @@ export default function EditBookPage({ params }: { params: { id: string } }) {
                 const file = e.target.files?.[0];
                 if (!file) return;
 
-                const { data } = await uploadApi.uploadImage(file);
-                setValue("cover_image", data.url);
-                toastSuccess("Image uploaded");
+                try {
+                  const { data } = await uploadApi.uploadImage(file);
+                  setValue("cover_image", data.url);
+                  toastSuccess("Image uploaded");
+                } catch {
+                  toastError("Image upload failed");
+                }
               }}
             />
 
