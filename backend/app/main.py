@@ -8,11 +8,11 @@ from app.routes import (
     book_routes,
     stats_routes,
     activity_routes,
-    upload_routes,
+    upload_routes
 )
 import os
 
-# ✅ FIRST create app
+# ✅ 1. CREATE APP FIRST
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Full Stack Intern Hiring Task – Book Management System API",
@@ -21,14 +21,14 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# ✅ THEN add CORS middleware
+# ✅ 2. ADD CORS AFTER APP CREATION
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://book-management-five-bice.vercel.app",
-        "https://book-management-c87sjij2t-komaljadhav34s-projects.vercel.app",
+        "https://book-management-c87sjij2t-komaljadhav34s-projects.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -39,7 +39,7 @@ app.add_middleware(
 os.makedirs("static/uploads", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Lifecycle events
+# Lifecycle
 @app.on_event("startup")
 async def startup():
     await connect_to_mongo()
@@ -55,7 +55,7 @@ app.include_router(stats_routes.router, prefix="/api/stats", tags=["Stats"])
 app.include_router(activity_routes.router, prefix="/api/activities", tags=["Activities"])
 app.include_router(upload_routes.router, prefix="/api/upload", tags=["Upload"])
 
-@app.get("/")
+@app.get("/", tags=["Health"])
 async def root():
     return {
         "message": f"{settings.PROJECT_NAME} API is running. Visit /docs for Swagger UI."
