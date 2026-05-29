@@ -1,12 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.config.database import connect_to_mongo, close_mongo_connection
 from app.config.settings import settings
-from app.routes import auth_routes, book_routes, stats_routes, activity_routes, upload_routes
-from fastapi.staticfiles import StaticFiles
+from app.routes import (
+    auth_routes,
+    book_routes,
+    stats_routes,
+    activity_routes,
+    upload_routes,
+)
 import os
 
-# ✅ CREATE APP FIRST
+# ✅ FIRST create app
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Full Stack Intern Hiring Task – Book Management System API",
@@ -15,7 +21,7 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# ✅ SINGLE, CORRECT CORS CONFIG
+# ✅ THEN add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -33,7 +39,7 @@ app.add_middleware(
 os.makedirs("static/uploads", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Lifecycle
+# Lifecycle events
 @app.on_event("startup")
 async def startup():
     await connect_to_mongo()
@@ -49,6 +55,8 @@ app.include_router(stats_routes.router, prefix="/api/stats", tags=["Stats"])
 app.include_router(activity_routes.router, prefix="/api/activities", tags=["Activities"])
 app.include_router(upload_routes.router, prefix="/api/upload", tags=["Upload"])
 
-@app.get("/", tags=["Health"])
+@app.get("/")
 async def root():
-    return {"message": f"{settings.PROJECT_NAME} API is running. Visit /docs for Swagger UI."}
+    return {
+        "message": f"{settings.PROJECT_NAME} API is running. Visit /docs for Swagger UI."
+    }
