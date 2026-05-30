@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.config.database import connect_to_mongo, close_mongo_connection
 from app.config.settings import settings
 from app.routes import auth_routes, book_routes, stats_routes, activity_routes, upload_routes
-from fastapi.staticfiles import StaticFiles
 import os
 
+# ✅ CREATE APP FIRST
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Book Management System API",
@@ -14,14 +15,14 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# ✅ ADD CORS ONLY ONCE, AFTER app creation
+# ✅ THEN ADD CORS (ONLY ONCE)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://book-management-iuyq-qnkfwrenp-komaljadhav34s-projects.vercel.app",
         "https://book-management-five-bice.vercel.app",
-        "https://book-management-c87sjij2t-komaljadhav34s-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -32,6 +33,7 @@ app.add_middleware(
 os.makedirs("static/uploads", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Lifecycle
 @app.on_event("startup")
 async def startup():
     await connect_to_mongo()
